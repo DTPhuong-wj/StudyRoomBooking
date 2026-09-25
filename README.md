@@ -49,7 +49,7 @@ npm --version
 Clone repository và truy cập vào thư mục project:
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/DTPhuong-wj/StudyRoomBooking.git
 cd StudyRoomBooking
 ```
 
@@ -71,7 +71,7 @@ Sau khi server khởi động:
 
 1. Mở ứng dụng Expo Go trên điện thoại.
 2. Đảm bảo điện thoại và máy tính dùng cùng một mạng Wi-Fi.
-3. Quét QR code hiển thị trong terminal hoặc trên trang Expo Dev Tools.
+3. Quét QR code hiển thị trong terminal hoặc trên trang Expo Dev Tools
 
 Có thể sử dụng các lệnh sau:
 
@@ -145,7 +145,3 @@ Xóa cache Metro rồi khởi động lại:
 ```bash
 npx expo start -c
 ```
-
-## License
-
-Project phục vụ mục đích học tập và demo.
