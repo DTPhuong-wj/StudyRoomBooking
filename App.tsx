@@ -1,20 +1,62 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { NavigationContainer, useNavigation } from '@react-navigation/native';
+import { createNativeStackNavigator, NativeStackNavigationProp, NativeStackScreenProps } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import { useMemo, useState } from 'react';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { create } from 'zustand';
+
+type Room = { id: string; name: string; building: string; seats: number; floor: string; status: 'Available' | 'Occupied'; accent: string; icon: string };
+type RootStackParamList = { MainTabs: undefined; RoomDetails: { roomId: string } };
+type TabParamList = { Browse: undefined; Bookings: undefined; Profile: undefined };
+
+const rooms: Room[] = [
+  { id: 'a3-101', name: 'Lab A3-101', building: 'Engineering Building A3', seats: 30, floor: '1st floor', status: 'Available', accent: '#e2f2ed', icon: '⌘' },
+  { id: 'library-b', name: 'Library Zone B', building: 'Main Library', seats: 50, floor: '2nd floor', status: 'Occupied', accent: '#f7e7df', icon: '▤' },
+  { id: 'c2-204', name: 'Focus Room C2-204', building: 'Science Center C2', seats: 8, floor: '2nd floor', status: 'Available', accent: '#e8e9f8', icon: '◌' },
+  { id: 'studio-1', name: 'Project Studio 01', building: 'Innovation Hub', seats: 12, floor: 'Ground floor', status: 'Available', accent: '#f7efd4', icon: '✦' },
+];
+const filters = ['All rooms', 'Available', 'Quiet', 'Large capacity'];
+const queryClient = new QueryClient();
+
+type BookingState = { bookedRoomId: string | null; bookRoom: (roomId: string) => void };
+const useBookingStore = create<BookingState>((set) => ({ bookedRoomId: null, bookRoom: (bookedRoomId) => set({ bookedRoomId }) }));
+
+const Stack = createNativeStackNavigator<RootStackParamList>();
+const Tabs = createBottomTabNavigator<TabParamList>();
 
 export default function App() {
-  return (
-    <View style={styles.container}>
-      <Text>Open up App.tsx to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
-  );
+  return <SafeAreaProvider><QueryClientProvider client={queryClient}><NavigationContainer><StatusBar style="dark" /><Stack.Navigator screenOptions={{ headerShown: false }}><Stack.Screen name="MainTabs" component={MainTabs} /><Stack.Screen name="RoomDetails" component={RoomDetails} /></Stack.Navigator></NavigationContainer></QueryClientProvider></SafeAreaProvider>;
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
+function MainTabs() {
+  return <Tabs.Navigator screenOptions={{ headerShown: false, tabBarActiveTintColor: '#27634f', tabBarInactiveTintColor: '#9aa39f', tabBarLabelStyle: styles.tabLabel, tabBarStyle: styles.tabBar }}><Tabs.Screen name="Browse" component={BrowseScreen} options={{ tabBarLabel: 'Browse rooms', tabBarIcon: () => <Text style={styles.tabIcon}>⌕</Text> }} /><Tabs.Screen name="Bookings" component={BookingsScreen} options={{ tabBarLabel: 'My bookings', tabBarIcon: () => <Text style={styles.tabIcon}>▣</Text> }} /><Tabs.Screen name="Profile" component={ProfileScreen} options={{ tabBarIcon: () => <Text style={styles.tabIcon}>◉</Text> }} /></Tabs.Navigator>;
+}
+
+function BrowseScreen() {
+  const [query, setQuery] = useState('');
+  const [filter, setFilter] = useState('All rooms');
+  const filteredRooms = useMemo(() => rooms.filter((room) => {
+    const matchesQuery = `${room.name} ${room.building}`.toLowerCase().includes(query.trim().toLowerCase());
+    const matchesFilter = filter === 'All rooms' || (filter === 'Available' && room.status === 'Available') || (filter === 'Large capacity' && room.seats >= 30) || (filter === 'Quiet' && room.seats <= 12);
+    return matchesQuery && matchesFilter;
+  }), [filter, query]);
+  return <SafeAreaView style={styles.safeArea}><FlatList data={filteredRooms} keyExtractor={(item) => item.id} contentContainerStyle={styles.listContent} showsVerticalScrollIndicator={false} ListHeaderComponent={<><View style={styles.headerRow}><View><Text style={styles.eyebrow}>CAMPUS SPACES</Text><Text style={styles.title}>Find your focus.</Text></View><View style={styles.notification}><Text style={styles.notificationText}>2</Text></View></View><Text style={styles.subtitle}>Book a room that fits the way you work today.</Text><View style={styles.searchWrap}><Text style={styles.searchIcon}>⌕</Text><TextInput value={query} onChangeText={setQuery} placeholder="Search rooms or buildings" placeholderTextColor="#8c918f" style={styles.searchInput} /></View><FlatList data={filters} horizontal showsHorizontalScrollIndicator={false} keyExtractor={(item) => item} contentContainerStyle={styles.filterList} renderItem={({ item }) => <Pressable onPress={() => setFilter(item)} style={[styles.filterChip, filter === item && styles.selectedChip]}><Text style={[styles.filterText, filter === item && styles.selectedFilterText]}>{item}</Text></Pressable>} /><View style={styles.sectionHeading}><Text style={styles.sectionTitle}>Nearby rooms</Text><Text style={styles.resultCount}>{filteredRooms.length} spaces</Text></View></>} renderItem={({ item }) => <RoomCard room={item} />} ListEmptyComponent={<Text style={styles.emptyText}>No rooms match those filters.</Text>} /></SafeAreaView>;
+}
+
+function RoomCard({ room }: { room: Room }) {
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  return <View style={styles.roomCard}><View style={[styles.roomImage, { backgroundColor: room.accent }]}><Text style={styles.roomIcon}>{room.icon}</Text><Text style={styles.imageLabel}>{room.floor}</Text></View><View style={styles.roomDetails}><View style={styles.roomTitleRow}><Text style={styles.roomName}>{room.name}</Text><Text style={[styles.statusDot, room.status === 'Occupied' && styles.occupiedDot]}>●</Text></View><Text style={styles.meta}>⌖  {room.building}</Text><View style={styles.roomFooter}><Text style={styles.meta}>♙  {room.seats} seats</Text><Text style={[styles.statusText, room.status === 'Occupied' && styles.occupiedText]}>{room.status}</Text></View>{room.status === 'Available' && <Pressable style={styles.bookButton} onPress={() => navigation.navigate('RoomDetails', { roomId: room.id })}><Text style={styles.bookButtonText}>View time slots  →</Text></Pressable>}</View></View>;
+}
+
+function RoomDetails({ route, navigation }: NativeStackScreenProps<RootStackParamList, 'RoomDetails'>) {
+  const room = rooms.find((item) => item.id === route.params.roomId);
+  const bookRoom = useBookingStore((state) => state.bookRoom);
+  return <View style={styles.page}><Text style={styles.eyebrow}>TIME SLOTS</Text><Text style={styles.title}>Choose a time.</Text><Text style={styles.subtitle}>{room?.name} · Select one available slot. Conflicting reservations are disabled automatically.</Text><View style={styles.slotGrid}>{['09:00 - 10:30', '11:00 - 12:30', '14:00 - 15:30', '16:00 - 17:30'].map((slot, index) => <Pressable key={slot} disabled={index === 1} onPress={() => { bookRoom(route.params.roomId); navigation.navigate('MainTabs'); }} style={[styles.slot, index === 1 && styles.disabledSlot]}><Text style={[styles.slotText, index === 1 && styles.disabledSlotText]}>{slot}</Text><Text style={styles.slotState}>{index === 1 ? 'Booked' : 'Available'}</Text></Pressable>)}</View></View>;
+}
+function BookingsScreen() { const bookedRoomId = useBookingStore((state) => state.bookedRoomId); const room = rooms.find((item) => item.id === bookedRoomId); return <View style={styles.page}><Text style={styles.eyebrow}>YOUR SCHEDULE</Text><Text style={styles.title}>My bookings.</Text>{room ? <View style={styles.bookingPanel}><Text style={styles.bookingLabel}>UPCOMING</Text><Text style={styles.roomName}>{room.name}</Text><Text style={styles.meta}>Today · 14:00 - 15:30</Text><Text style={styles.meta}>{room.building}</Text><View style={styles.confirmed}><Text style={styles.statusText}>✓ Confirmed</Text></View></View> : <Text style={styles.emptyText}>Your reserved rooms will appear here.</Text>}</View>; }
+function ProfileScreen() { return <View style={styles.page}><Text style={styles.eyebrow}>ACCOUNT</Text><Text style={styles.title}>Your profile.</Text><View style={styles.profileHero}><View style={styles.avatar}><Text style={styles.avatarText}>TN</Text></View><Text style={styles.profileName}>Thanh Nguyen</Text><Text style={styles.meta}>Computer Science · Year 3</Text></View><View style={styles.settingsRow}><Text style={styles.settingsLabel}>Notifications</Text><Text style={styles.settingsValue}>On  ›</Text></View><View style={styles.settingsRow}><Text style={styles.settingsLabel}>Campus</Text><Text style={styles.settingsValue}>North campus  ›</Text></View></View>; }
+
+const styles = StyleSheet.create({ safeArea: { flex: 1, backgroundColor: '#f7f8f5' }, listContent: { paddingHorizontal: 20, paddingBottom: 110 }, headerRow: { marginTop: 22, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }, eyebrow: { color: '#6d7772', fontSize: 11, fontWeight: '700', letterSpacing: 1.6 }, title: { color: '#17211d', fontSize: 32, fontWeight: '800', marginTop: 7 }, subtitle: { color: '#707a75', fontSize: 15, lineHeight: 22, marginTop: 9, maxWidth: 300 }, notification: { backgroundColor: '#d5e9df', width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' }, notificationText: { color: '#23604c', fontWeight: '800' }, searchWrap: { backgroundColor: '#fff', borderColor: '#e5e9e5', borderWidth: 1, borderRadius: 14, height: 52, flexDirection: 'row', alignItems: 'center', marginTop: 24, paddingHorizontal: 15 }, searchIcon: { fontSize: 25, color: '#557265', marginRight: 9 }, searchInput: { flex: 1, color: '#17211d', fontSize: 15 }, filterList: { gap: 8, paddingVertical: 18 }, filterChip: { paddingHorizontal: 14, paddingVertical: 9, borderRadius: 20, backgroundColor: '#e9eeea' }, selectedChip: { backgroundColor: '#27634f' }, filterText: { color: '#617069', fontSize: 13, fontWeight: '600' }, selectedFilterText: { color: '#fff' }, sectionHeading: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }, sectionTitle: { color: '#17211d', fontSize: 20, fontWeight: '800' }, resultCount: { color: '#89918d', fontSize: 13 }, roomCard: { backgroundColor: '#fff', borderRadius: 18, marginBottom: 14, overflow: 'hidden', borderColor: '#e8ebe8', borderWidth: 1 }, roomImage: { height: 108, justifyContent: 'center', alignItems: 'center', position: 'relative' }, roomIcon: { color: '#315c4d', fontSize: 47, fontWeight: '300' }, imageLabel: { position: 'absolute', top: 12, right: 12, backgroundColor: 'rgba(255,255,255,0.65)', color: '#53645d', fontSize: 11, paddingHorizontal: 9, paddingVertical: 5, borderRadius: 10 }, roomDetails: { padding: 15 }, roomTitleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }, roomName: { color: '#17211d', fontSize: 17, fontWeight: '800', marginBottom: 7 }, statusDot: { color: '#37a77d', fontSize: 14 }, occupiedDot: { color: '#dc745f' }, meta: { color: '#7b8580', fontSize: 13, marginBottom: 7 }, roomFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 3 }, statusText: { color: '#2d8b68', fontSize: 13, fontWeight: '700' }, occupiedText: { color: '#c86755' }, bookButton: { backgroundColor: '#eff5f1', borderRadius: 10, paddingVertical: 11, alignItems: 'center', marginTop: 12 }, bookButtonText: { color: '#27634f', fontWeight: '800', fontSize: 13 }, emptyText: { color: '#7b8580', fontSize: 15, paddingTop: 26 }, tabBar: { height: 83, paddingTop: 11, borderTopWidth: 1, borderTopColor: '#e4e9e5', backgroundColor: '#fff' }, tabIcon: { color: '#9aa39f', fontSize: 21, marginBottom: 4 }, tabLabel: { fontSize: 11, fontWeight: '700' }, page: { flex: 1, backgroundColor: '#f7f8f5', paddingHorizontal: 20, paddingTop: 24 }, bookingPanel: { backgroundColor: '#fff', borderRadius: 18, padding: 20, marginTop: 28, borderWidth: 1, borderColor: '#e5ebe6' }, bookingLabel: { color: '#6d7772', fontSize: 11, fontWeight: '700', letterSpacing: 1.4, marginBottom: 16 }, confirmed: { backgroundColor: '#edf7f0', alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 7, borderRadius: 9, marginTop: 9 }, profileHero: { alignItems: 'center', backgroundColor: '#e1eee7', borderRadius: 18, padding: 24, marginTop: 28 }, avatar: { backgroundColor: '#27634f', width: 65, height: 65, borderRadius: 33, justifyContent: 'center', alignItems: 'center', marginBottom: 12 }, avatarText: { color: '#fff', fontSize: 20, fontWeight: '800' }, profileName: { color: '#17211d', fontSize: 19, fontWeight: '800', marginBottom: 6 }, settingsRow: { paddingVertical: 19, borderBottomWidth: 1, borderBottomColor: '#e1e7e2', flexDirection: 'row', justifyContent: 'space-between' }, settingsLabel: { color: '#25332d', fontWeight: '600' }, settingsValue: { color: '#7b8580', fontSize: 13 }, slotGrid: { marginTop: 28, gap: 12 }, slot: { backgroundColor: '#fff', borderColor: '#d9e5dd', borderWidth: 1, borderRadius: 14, padding: 16, flexDirection: 'row', justifyContent: 'space-between' }, disabledSlot: { backgroundColor: '#ecefed', borderColor: '#ecefed' }, slotText: { color: '#244f40', fontWeight: '800' }, disabledSlotText: { color: '#9aa39f' }, slotState: { color: '#7b8580', fontSize: 12 } });
