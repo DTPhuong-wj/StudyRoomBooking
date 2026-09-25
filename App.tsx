@@ -5,20 +5,28 @@ import { createNativeStackNavigator, NativeStackNavigationProp, NativeStackScree
 import { StatusBar } from 'expo-status-bar';
 import { useMemo, useState } from 'react';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
-import { Alert, FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, FlatList, Image, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { create } from 'zustand';
 
-type Room = { id: string; name: string; building: string; seats: number; floor: string; status: 'Available' | 'Occupied'; accent: string; icon: string };
+const extraStyles = StyleSheet.create({ filterHeading: { color: '#6d7772', fontSize: 12, fontWeight: '700', marginTop: 3 }, valueList: { gap: 8, paddingBottom: 10 }, valueChip: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 18, backgroundColor: '#fff', borderWidth: 1, borderColor: '#dce5df' }, selectedValueChip: { backgroundColor: '#d5e9df', borderColor: '#27634f' }, valueText: { color: '#557265', fontSize: 12, fontWeight: '600' }, selectedValueText: { color: '#27634f' }, clearFilter: { color: '#c86755', fontSize: 12, fontWeight: '700', marginBottom: 8 }, roomPhoto: { ...StyleSheet.absoluteFill }, imageShade: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(14, 36, 28, 0.14)' }, selectedRoomImage: { borderColor: '#27634f' } });
+
+type Room = { id: string; name: string; building: string; seats: number; floor: string; status: 'Available' | 'Occupied'; imageUrl: string };
+type FilterCriterion = 'capacity' | 'building' | 'status' | null;
 type RootStackParamList = { MainTabs: undefined; RoomDetails: { roomId: string } };
 type TabParamList = { Browse: undefined; Bookings: undefined; Profile: undefined };
 
 const rooms: Room[] = [
-  { id: 'a3-101', name: 'Lab A3-101', building: 'Engineering Building A3', seats: 30, floor: '1st floor', status: 'Available', accent: '#e2f2ed', icon: '⌘' },
-  { id: 'library-b', name: 'Library Zone B', building: 'Main Library', seats: 50, floor: '2nd floor', status: 'Occupied', accent: '#f7e7df', icon: '▤' },
-  { id: 'c2-204', name: 'Focus Room C2-204', building: 'Science Center C2', seats: 8, floor: '2nd floor', status: 'Available', accent: '#e8e9f8', icon: '◌' },
-  { id: 'studio-1', name: 'Project Studio 01', building: 'Innovation Hub', seats: 12, floor: 'Ground floor', status: 'Available', accent: '#f7efd4', icon: '✦' },
+  { id: 'a3-101', name: 'Lab A3-101', building: 'Engineering A3', seats: 30, floor: '1st floor', status: 'Available', imageUrl: 'https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1000&q=85' },
+  { id: 'library-b', name: 'Library Zone B', building: 'Main Library', seats: 50, floor: '2nd floor', status: 'Occupied', imageUrl: 'https://images.unsplash.com/photo-1568667256549-094345857637?auto=format&fit=crop&w=1000&q=85' },
+  { id: 'c2-204', name: 'Focus Room C2-204', building: 'Science Center C2', seats: 8, floor: '2nd floor', status: 'Available', imageUrl: 'https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=1000&q=85' },
+  { id: 'studio-1', name: 'Project Studio 01', building: 'Innovation Hub', seats: 12, floor: 'Ground floor', status: 'Available', imageUrl: 'https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&w=1000&q=85' },
+  { id: 'b1-205', name: 'Seminar Room B1-205', building: 'Business B1', seats: 24, floor: '2nd floor', status: 'Available', imageUrl: 'https://images.unsplash.com/photo-1517502884422-41eaead166d4?auto=format&fit=crop&w=1000&q=85' },
+  { id: 'library-a', name: 'Library Zone A', building: 'Main Library', seats: 18, floor: '1st floor', status: 'Available', imageUrl: 'https://images.unsplash.com/photo-1507842217343-583bb7270b66?auto=format&fit=crop&w=1000&q=85' },
+  { id: 'd4-310', name: 'Design Lab D4-310', building: 'Design Center D4', seats: 16, floor: '3rd floor', status: 'Occupied', imageUrl: 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1000&q=85' },
+  { id: 'e2-012', name: 'Quiet Pod E2-012', building: 'Learning Commons E2', seats: 4, floor: 'Ground floor', status: 'Available', imageUrl: 'https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1000&q=85&sat=-20' },
+  { id: 'lab-a3-204', name: 'Computer Lab A3-204', building: 'Engineering A3', seats: 40, floor: '2nd floor', status: 'Occupied', imageUrl: 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1000&q=85' },
+  { id: 'f5-108', name: 'Collaboration Room F5-108', building: 'Arts F5', seats: 10, floor: '1st floor', status: 'Available', imageUrl: 'https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&w=1000&q=85&sat=-15' },
 ];
-const filters = ['All rooms', 'Available', 'Quiet', 'Large capacity'];
 const queryClient = new QueryClient();
 
 type BookingState = { bookedRoomId: string | null; bookedSlot: string | null; bookRoom: (roomId: string, slot: string) => void; cancelBooking: () => void };
@@ -37,18 +45,25 @@ function MainTabs() {
 
 function BrowseScreen() {
   const [query, setQuery] = useState('');
-  const [filter, setFilter] = useState('All rooms');
+  const [filterCriterion, setFilterCriterion] = useState<FilterCriterion>(null);
+  const [filterValue, setFilterValue] = useState('');
+  const filterOptions = filterCriterion === 'capacity'
+    ? ['Up to 10 seats', '11-30 seats', '31+ seats']
+    : filterCriterion === 'building'
+      ? ['Engineering A3', 'Main Library', 'Science Center C2', 'Innovation Hub', 'Other buildings']
+      : filterCriterion === 'status' ? ['Available', 'Occupied'] : [];
   const filteredRooms = useMemo(() => rooms.filter((room) => {
     const matchesQuery = `${room.name} ${room.building}`.toLowerCase().includes(query.trim().toLowerCase());
-    const matchesFilter = filter === 'All rooms' || (filter === 'Available' && room.status === 'Available') || (filter === 'Large capacity' && room.seats >= 30) || (filter === 'Quiet' && room.seats <= 12);
+    const matchesFilter = !filterValue || (filterCriterion === 'status' && room.status === filterValue) || (filterCriterion === 'building' && (filterValue === 'Other buildings' ? !['Engineering A3', 'Main Library', 'Science Center C2', 'Innovation Hub'].includes(room.building) : room.building === filterValue)) || (filterCriterion === 'capacity' && ((filterValue === 'Up to 10 seats' && room.seats <= 10) || (filterValue === '11-30 seats' && room.seats >= 11 && room.seats <= 30) || (filterValue === '31+ seats' && room.seats >= 31)));
     return matchesQuery && matchesFilter;
-  }), [filter, query]);
-  return <SafeAreaView style={styles.safeArea}><FlatList data={filteredRooms} keyExtractor={(item) => item.id} contentContainerStyle={styles.listContent} showsVerticalScrollIndicator={false} ListHeaderComponent={<><View style={styles.headerRow}><View><Text style={styles.eyebrow}>CAMPUS SPACES</Text><Text style={styles.title}>Find your focus.</Text></View><View style={styles.notification}><Text style={styles.notificationText}>2</Text></View></View><Text style={styles.subtitle}>Book a room that fits the way you work today.</Text><View style={styles.searchWrap}><Text style={styles.searchIcon}>⌕</Text><TextInput value={query} onChangeText={setQuery} placeholder="Search rooms or buildings" placeholderTextColor="#8c918f" style={styles.searchInput} /></View><FlatList data={filters} horizontal showsHorizontalScrollIndicator={false} keyExtractor={(item) => item} contentContainerStyle={styles.filterList} renderItem={({ item }) => <Pressable onPress={() => setFilter(item)} style={[styles.filterChip, filter === item && styles.selectedChip]}><Text style={[styles.filterText, filter === item && styles.selectedFilterText]}>{item}</Text></Pressable>} /><View style={styles.sectionHeading}><Text style={styles.sectionTitle}>Nearby rooms</Text><Text style={styles.resultCount}>{filteredRooms.length} spaces</Text></View></>} renderItem={({ item }) => <RoomCard room={item} />} ListEmptyComponent={<Text style={styles.emptyText}>No rooms match those filters.</Text>} /></SafeAreaView>;
+  }), [filterCriterion, filterValue, query]);
+  const selectCriterion = (criterion: FilterCriterion) => { setFilterCriterion(criterion); setFilterValue(''); };
+  return <SafeAreaView style={styles.safeArea}><FlatList data={filteredRooms} keyExtractor={(item) => item.id} contentContainerStyle={styles.listContent} showsVerticalScrollIndicator={false} ListHeaderComponent={<><View style={styles.headerRow}><View><Text style={styles.eyebrow}>CAMPUS SPACES</Text><Text style={styles.title}>Find your focus.</Text></View><View style={styles.notification}><Text style={styles.notificationText}>{filteredRooms.length}</Text></View></View><Text style={styles.subtitle}>Book a room that fits the way you work today.</Text><View style={styles.searchWrap}><Text style={styles.searchIcon}>⌕</Text><TextInput value={query} onChangeText={setQuery} placeholder="Search rooms or buildings" placeholderTextColor="#8c918f" style={styles.searchInput} /></View><Text style={extraStyles.filterHeading}>Filter by one criterion</Text><FlatList data={[{ key: 'capacity' as const, label: 'Number of seats' }, { key: 'building' as const, label: 'Building' }, { key: 'status' as const, label: 'Availability' }]} horizontal showsHorizontalScrollIndicator={false} keyExtractor={(item) => item.key} contentContainerStyle={styles.filterList} renderItem={({ item }) => <Pressable onPress={() => selectCriterion(item.key)} style={[styles.filterChip, filterCriterion === item.key && styles.selectedChip]}><Text style={[styles.filterText, filterCriterion === item.key && styles.selectedFilterText]}>{item.label}</Text></Pressable>} />{filterCriterion && <FlatList data={filterOptions} horizontal showsHorizontalScrollIndicator={false} keyExtractor={(item) => item} contentContainerStyle={extraStyles.valueList} renderItem={({ item }) => <Pressable onPress={() => setFilterValue(item)} style={[extraStyles.valueChip, filterValue === item && extraStyles.selectedValueChip]}><Text style={[extraStyles.valueText, filterValue === item && extraStyles.selectedValueText]}>{item}</Text></Pressable>} />}{filterValue && <Pressable onPress={() => setFilterValue('')}><Text style={extraStyles.clearFilter}>Clear selected filter ×</Text></Pressable>}<View style={styles.sectionHeading}><Text style={styles.sectionTitle}>Nearby rooms</Text><Text style={styles.resultCount}>{filteredRooms.length} spaces</Text></View></>} renderItem={({ item }) => <RoomCard room={item} />} ListEmptyComponent={<Text style={styles.emptyText}>No rooms match those filters.</Text>} /></SafeAreaView>;
 }
 
 function RoomCard({ room }: { room: Room }) {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  return <View style={styles.roomCard}><View style={[styles.roomImage, { backgroundColor: room.accent }]}><Text style={styles.roomIcon}>{room.icon}</Text><Text style={styles.imageLabel}>{room.floor}</Text></View><View style={styles.roomDetails}><View style={styles.roomTitleRow}><Text style={styles.roomName}>{room.name}</Text><Text style={[styles.statusDot, room.status === 'Occupied' && styles.occupiedDot]}>●</Text></View><Text style={styles.meta}>⌖  {room.building}</Text><View style={styles.roomFooter}><Text style={styles.meta}>♙  {room.seats} seats</Text><Text style={[styles.statusText, room.status === 'Occupied' && styles.occupiedText]}>{room.status}</Text></View>{room.status === 'Available' && <Pressable style={styles.bookButton} onPress={() => navigation.navigate('RoomDetails', { roomId: room.id })}><Text style={styles.bookButtonText}>View time slots  →</Text></Pressable>}</View></View>;
+  return <View style={styles.roomCard}><View style={styles.roomImage}><Image source={{ uri: room.imageUrl }} style={extraStyles.roomPhoto} /><View style={extraStyles.imageShade} /><Text style={styles.imageLabel}>{room.floor}</Text></View><View style={styles.roomDetails}><View style={styles.roomTitleRow}><Text style={styles.roomName}>{room.name}</Text><Text style={[styles.statusDot, room.status === 'Occupied' && styles.occupiedDot]}>●</Text></View><Text style={styles.meta}>⌖  {room.building}</Text><View style={styles.roomFooter}><Text style={styles.meta}>♙  {room.seats} seats</Text><Text style={[styles.statusText, room.status === 'Occupied' && styles.occupiedText]}>{room.status}</Text></View>{room.status === 'Available' && <Pressable style={styles.bookButton} onPress={() => navigation.navigate('RoomDetails', { roomId: room.id })}><Text style={styles.bookButtonText}>View time slots  →</Text></Pressable>}</View></View>;
 }
 
 function RoomDetails({ route, navigation }: NativeStackScreenProps<RootStackParamList, 'RoomDetails'>) {

@@ -8,8 +8,9 @@
 
 - Browse Rooms: xem danh sách phòng học và phòng lab.
 - Tìm kiếm theo tên phòng hoặc tòa nhà.
-- Bộ lọc theo trạng thái, không gian yên tĩnh và sức chứa lớn.
-- Hiển thị thông tin phòng: hình minh họa, tòa nhà, số chỗ và trạng thái.
+- Bộ lọc theo một tiêu chí tại một thời điểm: số lượng người, tòa nhà hoặc trạng thái.
+- Hiển thị thông tin phòng với ảnh thật, tòa nhà, số chỗ và trạng thái.
+- Có tối thiểu 10 phòng mẫu để thuận tiện cho việc demo và kiểm thử filter.
 - Chọn time slot còn trống.
 - Khóa các time slot đã được đặt để tránh xung đột.
 - My Bookings: xem lịch đặt phòng sắp tới.
@@ -116,7 +117,7 @@ StudyRoomBooking/
 
 ## Ghi chú dữ liệu
 
-Phiên bản hiện tại sử dụng dữ liệu phòng mẫu được khai báo local để phục vụ demo. Zustand lưu booking trong bộ nhớ của ứng dụng, vì vậy dữ liệu booking sẽ mất khi reload app.
+Phiên bản hiện tại sử dụng dữ liệu phòng mẫu được khai báo local để phục vụ demo. Catalog gồm 10 phòng với ảnh thật được tải từ Unsplash. Zustand lưu booking trong bộ nhớ của ứng dụng, vì vậy dữ liệu booking sẽ mất khi reload app.
 
 TanStack Query đã được cấu hình trong root app để sẵn sàng kết nối API backend ở các phiên bản tiếp theo. Khi dữ liệu được lấy từ server, nên đưa việc fetching và cache vào TanStack Query; chỉ dùng Zustand cho trạng thái UI hoặc trạng thái client-local.
 

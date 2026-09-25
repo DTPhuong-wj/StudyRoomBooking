@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <title>Báo cáo kỹ thuật - Study Room Booking</title>
+  <style>
+    @page { size: A4; margin: 0; }
+    :root { --ink: #18332b; --muted: #5d7169; --green: #2f7359; --pale: #e8f1ec; --line: #cddbd3; --accent: #d88963; }
+    * { box-sizing: border-box; }
+    body { margin: 0; color: var(--ink); background: #edf1ee; font-family: Arial, "DejaVu Sans", sans-serif; font-size: 9.7pt; line-height: 1.32; }
+    .page { width: 210mm; height: 297mm; padding: 14mm 17mm 13mm; margin: 0 auto; background: white; position: relative; overflow: hidden; page-break-after: always; break-after: page; }
+    .page:last-child { page-break-after: auto; }
+    .masthead { display: flex; justify-content: space-between; border-bottom: 2px solid var(--green); padding-bottom: 7px; margin-bottom: 17px; }
+    .brand { color: var(--green); font-weight: 700; letter-spacing: 1.4px; font-size: 9pt; text-transform: uppercase; }
+    .doc-meta { color: var(--muted); font-size: 8.5pt; text-align: right; }
+    h1 { font-size: 25pt; line-height: 1.12; margin: 24px 0 10px; letter-spacing: -.4px; }
+    h2 { color: var(--green); font-size: 14pt; margin: 13px 0 5px; border-bottom: 1px solid var(--line); padding-bottom: 3px; break-after: avoid; }
+    h3 { font-size: 10.5pt; margin: 7px 0 3px; color: var(--green); break-after: avoid; }
+    p { margin: 4px 0 6px; }
+    ul { margin: 4px 0 6px 18px; padding: 0; }
+    li { margin: 2px 0; }
+    .lead { color: var(--muted); font-size: 12pt; max-width: 150mm; }
+    .cover-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 22px; }
+    .fact { border-left: 4px solid var(--green); background: var(--pale); padding: 8px 10px; }
+    .fact strong { display: block; color: var(--green); font-size: 8.5pt; text-transform: uppercase; letter-spacing: .8px; margin-bottom: 4px; }
+    .callout { background: #fff5ed; border-left: 4px solid var(--accent); padding: 7px 10px; margin: 9px 0; break-inside: avoid; }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    table { border-collapse: collapse; width: 100%; margin: 5px 0 8px; font-size: 8.8pt; break-inside: avoid; }
+    th { background: var(--green); color: white; text-align: left; font-weight: 700; }
+    th, td { border: 1px solid var(--line); padding: 4px 6px; vertical-align: top; }
+    tr:nth-child(even) td { background: #f5f8f6; }
+    .flow { display: flex; align-items: center; gap: 5px; margin: 9px 0; break-inside: avoid; }
+    .step { flex: 1; background: var(--pale); border: 1px solid var(--line); padding: 7px 5px; text-align: center; font-weight: 700; font-size: 8.5pt; }
+    .arrow { color: var(--accent); font-size: 16pt; font-weight: 700; }
+    .code { font-family: Consolas, monospace; background: #f2f5f3; border: 1px solid var(--line); padding: 7px 9px; font-size: 8.5pt; white-space: pre-wrap; break-inside: avoid; }
+    .footer { position: absolute; bottom: 9mm; left: 18mm; right: 18mm; border-top: 1px solid var(--line); padding-top: 5px; display: flex; justify-content: space-between; color: var(--muted); font-size: 8pt; }
+    .number { color: var(--green); font-weight: 700; }
+    .check { color: var(--green); font-weight: 700; }
+    .risk { color: #a75b3d; font-weight: 700; }
+    @media print { body { background: white; } .page { margin: 0; } }
+  </style>
+</head>
+<body>
+  <section class="page">
+    <div class="masthead"><div class="brand">Báo cáo Mini-Project 2</div><div class="doc-meta">Study Room Booking<br>25/09/2026</div></div>
+    <h1>Study Room Booking</h1>
+    <p class="lead">Ứng dụng di động hỗ trợ sinh viên tìm kiếm, lọc và đặt phòng học hoặc phòng lab trong khuôn viên trường.</p>
+    <div class="cover-grid">
+      <div class="fact"><strong>Loại sản phẩm</strong>Ứng dụng mobile chạy trên Expo Go</div>
+      <div class="fact"><strong>Đối tượng</strong>Sinh viên cần tìm không gian học tập nhanh</div>
+      <div class="fact"><strong>Trạng thái</strong>Prototype tương tác, dữ liệu demo local</div>
+      <div class="fact"><strong>Nền tảng</strong>Android, iOS và Expo web preview</div>
+    </div>
+    <h2>1. Tóm tắt</h2>
+    <p>Study Room Booking giải quyết bài toán tìm phòng học trong môi trường campus có nhiều không gian và trạng thái sử dụng khác nhau. Người dùng có thể duyệt danh sách phòng, tìm theo tên hoặc tòa nhà, lọc theo nhu cầu, chọn time slot và xác nhận đặt phòng.</p>
+    <p>Thiết kế ưu tiên thao tác trên điện thoại: nội dung được tổ chức thành danh sách cuộn hiệu quả, thông tin quan trọng nằm ngay trên room card, còn các hành động có rủi ro như đặt và hủy đều có bước xác nhận.</p>
+    <div class="callout"><strong>Phạm vi bản demo:</strong> dữ liệu phòng và booking được lưu local trong bộ nhớ ứng dụng. TanStack Query đã được tích hợp làm nền tảng cho việc kết nối server state ở giai đoạn tiếp theo.</div>
+    <h2>2. Mục tiêu và yêu cầu</h2>
+    <div class="two-col">
+      <div><h3>Mục tiêu sản phẩm</h3><ul><li>Giảm thời gian tìm phòng phù hợp.</li><li>Hiển thị rõ sức chứa, vị trí và trạng thái.</li><li>Ngăn người dùng đặt vào time slot xung đột.</li><li>Cung cấp quy trình đặt/hủy dễ hiểu.</li></ul></div>
+      <div><h3>Yêu cầu kỹ thuật</h3><ul><li>React Native + Expo Managed.</li><li>TypeScript strict mode.</li><li>React Navigation Stack và Bottom Tabs.</li><li>Zustand cho client state.</li><li>TanStack Query cho server state.</li><li>FlatList cho danh sách room feed.</li></ul></div>
+    </div>
+    <div class="footer"><span>Study Room Booking · Báo cáo kỹ thuật</span><span class="number">01 / 03</span></div>
+  </section>
+
+  <section class="page">
+    <div class="masthead"><div class="brand">Study Room Booking</div><div class="doc-meta">Thiết kế hệ thống và trải nghiệm</div></div>
+    <h2>3. Kiến trúc ứng dụng</h2>
+    <p>Ứng dụng hiện được tổ chức trong entry point TypeScript, phù hợp với quy mô prototype. Root app cung cấp các context cần thiết, sau đó điều hướng tới stack chính và bottom tabs.</p>
+    <div class="flow"><div class="step">SafeAreaProvider<br><small>Thiết bị & vùng an toàn</small></div><div class="arrow">→</div><div class="step">QueryClientProvider<br><small>Server state boundary</small></div><div class="arrow">→</div><div class="step">NavigationContainer<br><small>Stack + Tabs</small></div></div>
+    <table><tr><th>Lớp</th><th>Giải pháp</th><th>Vai trò</th></tr><tr><td>Presentation</td><td>React Native components</td><td>Room card, search, chips, time slots, alerts.</td></tr><tr><td>Navigation</td><td>React Navigation 7</td><td>Stack cho chi tiết phòng; tabs cho Browse, Bookings, Profile.</td></tr><tr><td>Client state</td><td>Zustand</td><td>Lưu room id và time slot đã đặt trong phiên hiện tại.</td></tr><tr><td>Server state</td><td>TanStack Query</td><td>Đã cấu hình QueryClient; sẵn sàng cho API và cache.</td></tr></table>
+    <h2>4. Các chức năng chính</h2>
+    <h3>4.1 Browse Rooms</h3>
+    <p>Danh sách phòng dùng <strong>FlatList</strong> với key ổn định và render item riêng. Mỗi room card hiển thị tên, tòa nhà, số chỗ, tầng và trạng thái Available/Occupied. Search input lọc theo tên phòng hoặc tên tòa nhà.</p>
+    <h3>4.2 Bộ lọc nhiều tham số</h3>
+    <p>Các filter chip gồm All rooms, Available, Quiet và Large capacity. Bộ lọc trạng thái hoạt động kết hợp với truy vấn văn bản, giúp người dùng thu hẹp danh sách theo nhiều tiêu chí trong một lần thao tác.</p>
+    <h3>4.3 Quy trình đặt phòng</h3>
+    <div class="flow"><div class="step">Room card</div><div class="arrow">→</div><div class="step">Chọn slot</div><div class="arrow">→</div><div class="step">Xác nhận</div><div class="arrow">→</div><div class="step">Thông báo thành công</div></div>
+    <p>Time slot đã xung đột được disable. Người dùng phải chọn slot trước khi nút xác nhận được kích hoạt. Khi bấm xác nhận, hệ thống hiển thị hộp thoại kiểm tra lại thông tin trước khi ghi booking vào Zustand.</p>
+    <h3>4.4 Hủy phòng</h3>
+    <p>Màn hình My Bookings hiển thị booking sắp tới và nút Cancel booking. Hành động hủy yêu cầu xác nhận lần hai, sau đó xóa room id và slot khỏi store, đồng thời hiển thị thông báo trạng thái.</p>
+    <h2>5. Điều hướng</h2>
+    <p>Navigation params được khai báo bằng TypeScript để tránh truyền sai dữ liệu giữa màn hình.</p>
+    <div class="code">RootStackParamList = {
+  MainTabs: undefined,
+  RoomDetails: { roomId: string }
+}
+
+TabParamList = { Browse, Bookings, Profile }</div>
+    <div class="footer"><span>Study Room Booking · Thiết kế hệ thống</span><span class="number">02 / 03</span></div>
+  </section>
+
+  <section class="page">
+    <div class="masthead"><div class="brand">Study Room Booking</div><div class="doc-meta">Đánh giá, kiểm thử và hướng phát triển</div></div>
+    <h2>6. Thiết kế UI/UX</h2>
+    <p>Giao diện sử dụng nền sáng xanh trung tính, tương phản rõ và các accent màu xanh lá cho hành động chính. Room card có cấu trúc ổn định để người dùng quét nhanh các thông tin quan trọng.</p>
+    <table><tr><th>Nguyên tắc</th><th>Cách áp dụng</th></tr><tr><td>Mobile-first</td><td>Safe area, nội dung dọc, bottom tabs và vùng chạm đủ lớn.</td></tr><tr><td>Phản hồi trạng thái</td><td>Chip đang chọn, slot selected, status dot và thông báo xác nhận.</td></tr><tr><td>Giảm lỗi thao tác</td><td>Slot xung đột bị disable; đặt và hủy có Alert xác nhận.</td></tr><tr><td>Khả năng quét</td><td>Eyebrow, tiêu đề, metadata và status được phân cấp trực quan.</td></tr></table>
+    <h2>7. Hiệu năng và chất lượng mã</h2>
+    <ul><li><span class="check">✓</span> Dùng FlatList thay vì render toàn bộ danh sách bằng map trong ScrollView.</li><li><span class="check">✓</span> Tìm kiếm và lọc được gom trong <code>useMemo</code>, tránh tính lại khi không cần thiết.</li><li><span class="check">✓</span> TypeScript strict mode và typed navigation params đã được bật.</li><li><span class="check">✓</span> SafeAreaProvider/SafeAreaView từ <code>react-native-safe-area-context</code> tương thích thiết bị có notch.</li><li><span class="check">✓</span> ESLint và TypeScript đã chạy thành công sau các thay đổi.</li></ul>
+    <h2>8. Kiểm thử và kết quả</h2>
+    <table><tr><th>Kiểm tra</th><th>Lệnh / kịch bản</th><th>Kết quả</th></tr><tr><td>Type safety</td><td><code>npx tsc --noEmit</code></td><td>Pass, không có lỗi TypeScript.</td></tr><tr><td>Lint</td><td><code>npx expo lint</code></td><td>Pass, không có warning sau khi gộp import.</td></tr><tr><td>Booking</td><td>Chọn slot → xác nhận → xem My Bookings</td><td>Booking hiển thị đúng room và slot.</td></tr><tr><td>Cancellation</td><td>Cancel → xác nhận → kiểm tra danh sách</td><td>Booking bị xóa và có thông báo thành công.</td></tr></table>
+    <h2>9. Giới hạn và hướng phát triển</h2>
+    <p><span class="risk">Giới hạn hiện tại:</span> dữ liệu chỉ là mock local và mất khi reload app; chưa có đăng nhập, API backend, đồng bộ đa thiết bị hoặc thông báo push.</p>
+    <p>Giai đoạn tiếp theo nên bổ sung REST API, xác thực người dùng, database cho room/booking, cơ chế kiểm tra conflict ở server và mutation của TanStack Query. Có thể thêm test tự động cho filter, booking state và navigation flow trước khi phát hành.</p>
+    <h2>10. Kết luận</h2>
+    <p>Study Room Booking đã hoàn thành một prototype có thể demo trên Expo Go với các luồng cốt lõi: tìm kiếm, lọc, xem phòng, chọn slot, xác nhận đặt, hủy đặt và hiển thị thông báo. Kiến trúc hiện tại giữ ranh giới rõ giữa navigation, client state và nền tảng server state, tạo cơ sở để mở rộng thành sản phẩm có backend.</p>
+    <div class="callout"><strong>Khuyến nghị demo:</strong> trình bày theo thứ tự Browse → search/filter → chọn Lab A3-101 → chọn slot → xác nhận → My Bookings → hủy booking.</div>
+    <div class="footer"><span>Study Room Booking · Kết luận và hướng phát triển</span><span class="number">03 / 03</span></div>
+  </section>
+</body>
+</html>
